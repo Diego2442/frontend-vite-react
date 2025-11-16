@@ -1,0 +1,55 @@
+name: Build, Analyze, and Deploy with SonarQube
+
+on:
+  push:
+    branches:
+      - main  # Este flujo se ejecutará solo cuando se haga push a la rama main
+
+jobs:
+  build_and_deploy:
+    name: Build, Analyze, and Deploy React App to S3
+    runs-on: ubuntu-latest  # La acción se ejecutará en un runner de Ubuntu
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Deshabilita clones superficiales para un análisis más relevante
+
+      # Paso 2: Ejecutar el análisis de SonarQube
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Asegúrate de tener este secreto configurado
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # Asegúrate de tener este secreto configurado
+
+      # Paso 3: Failing si Quality Gate de SonarQube no pasa
+      - name: Wait for Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Paso 4: Instalar dependencias de React/Vite
+      - name: Install Dependencies
+        run: |
+          npm install
+
+      # Paso 5: Construir la aplicación React/Vite
+      - name: Build React App (Vite)
+        run: |
+          npm run build
+
+      # Paso 6: Configurar AWS CLI (para acceder a S3)
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+
+      # Paso 7: Subir el contenido de la aplicación a S3
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
