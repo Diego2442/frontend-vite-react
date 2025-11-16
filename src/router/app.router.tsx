@@ -1,11 +1,12 @@
-import HomePage from "@/home/pages/HomePage";
-import { createBrowserRouter, Navigate } from "react-router";
-import { AuthenticatedRoute, NotAuthenticatedRoute } from "./custom/ProtectedRoutes";
 import LoginPage from "@/auth/pages/LoginPage";
 import RegisterPage from "@/auth/pages/RegisterPage";
+import HomePage from "@/home/pages/HomePage";
 import PokemonPage from "@/pokemon/pages/PokemonPage";
+import { createHashRouter, Navigate } from "react-router";
+import { AuthenticatedRoute, NotAuthenticatedRoute } from "./custom/ProtectedRoutes";
 
-export const appRouter = createBrowserRouter([
+export const appRouter = createHashRouter([
+//export const appRouter = createBrowserRouter([
   {
     path: "/",
     element: (
